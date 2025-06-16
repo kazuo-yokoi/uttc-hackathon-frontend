@@ -3,8 +3,10 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./routes/Home";
 import Login from "./routes/Login";
 import SignUp from "./routes/Signup";
+import RegisterPage from "./routes/UserRegister";
 import PrivateRoute from "./routes/PrivateRoute";
 import PublicRoute from "./routes/PublicRoute";
+import HomePage from "./routes/HomePage";
 
 function App() {
   return (
@@ -32,6 +34,22 @@ function App() {
             <PublicRoute>
               <SignUp />
             </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PrivateRoute>
+              <RegisterPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/home"
+          element={
+            <PrivateRoute>
+              <HomePage />
+            </PrivateRoute>
           }
         />
       </Routes>
