@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuthContext } from "../context/AuthContext";
+import { API_ENDPOINT } from "./api";
 
 export type Nullable<T> = T | null;
 
@@ -77,11 +78,8 @@ const RegisterPage: React.FC = () => {
       updated_at: new Date().toISOString(),
     };
 
-    //要変更
-    const API_ENDPOINT = "http://localhost:8081/user";
-
     try {
-      const response = await fetch(API_ENDPOINT, {
+      const response = await fetch(`${API_ENDPOINT}/user`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

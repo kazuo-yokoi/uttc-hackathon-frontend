@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Nullable } from "./UserRegister";
 import { useAuthContext } from "../context/AuthContext";
+import { API_ENDPOINT } from "./api";
 
 // --- 型定義 ---
 
@@ -166,8 +167,6 @@ const HomePage: React.FC = () => {
   const [postError, setPostError] = useState<string | null>(null);
   const { user } = useAuthContext();
   const firebaseUID = user?.uid ?? "";
-  //要変更
-  const API_ENDPOINT = "http://localhost:8081/tweet";
 
   useEffect(() => {
     const fetchTweets = async () => {
@@ -175,7 +174,7 @@ const HomePage: React.FC = () => {
       setError(null);
 
       try {
-        const response = await fetch(API_ENDPOINT);
+        const response = await fetch(`${API_ENDPOINT}/tweet`);
 
         if (!response.ok) {
           // HTTPステータスが2xxでない場合はエラーを投げる
@@ -220,7 +219,7 @@ const HomePage: React.FC = () => {
     };
 
     try {
-      const response = await fetch(API_ENDPOINT, {
+      const response = await fetch(`${API_ENDPOINT}/tweet`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newTweetData),
