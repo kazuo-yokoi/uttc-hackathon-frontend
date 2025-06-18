@@ -1,15 +1,18 @@
 import { Tweet } from "../api/api";
+import { LikeButton } from "./LikeButton";
 
 interface TweetCardProps {
   tweet: Tweet;
   onCardClick?: (id: number) => void;
   onUserClick: (userId: string) => void;
+  onLikeToggle: (id: number) => void;
 }
 // 個別のツイート表示カード
 export const TweetCard: React.FC<TweetCardProps> = ({
   tweet,
   onCardClick,
   onUserClick,
+  onLikeToggle,
 }) => {
   const isCardClickable = !!onCardClick;
   const formattedDate = new Date(tweet.created_at).toLocaleString("ja-JP", {
@@ -31,6 +34,12 @@ export const TweetCard: React.FC<TweetCardProps> = ({
     if (isCardClickable) {
       onCardClick(tweet.id);
     }
+  };
+
+  //いいねボタンのクリックハンドラ
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onLikeToggle(tweet.id);
   };
 
   return (
@@ -73,6 +82,14 @@ export const TweetCard: React.FC<TweetCardProps> = ({
           <span className="text-xs">{formattedDate}</span>
         </div>
         <p className="mt-1 text-white whitespace-pre-wrap">{tweet.text}</p>
+        <div className="flex items-center justify-start mt-4 space-x-12 text-gray-500">
+          {/* 他のボタン（Reply, Retweet）もここに追加可能 */}
+          <LikeButton
+            isLiked={tweet.is_liked}
+            likeCount={tweet.likes_count}
+            onClick={handleLikeClick}
+          />
+        </div>
       </div>
     </div>
   );

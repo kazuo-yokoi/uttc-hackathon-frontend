@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTweets } from "./hooks/useTweets";
-import { NewPostData, postTweet } from "./api/api";
+import { NewPostData, postTweet, unlikeTweet, likeTweet } from "./api/api";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { HomePage } from "./pages/HomePage";
@@ -15,13 +15,14 @@ type ViewState =
 
 export const MainApp: React.FC = () => {
   const [view, setView] = useState<ViewState>({ mode: "timeline" });
-  const { allTweets, isLoading, error, addTweet } = useTweets();
-  const [postError, setPostError] = useState<string | null>(null);
   const { user } = useAuthContext();
+  const currentUserID = user?.uid ?? "";
+  const { allTweets, isLoading, error, addTweet, toggleLikeState } =
+    useTweets(currentUserID);
+  const [postError, setPostError] = useState<string | null>(null);
 
   const handlePost = async (content: string, replyToId?: number) => {
     setPostError(null);
-    const currentUserID = user?.uid ?? "";
 
     const newPostData: NewPostData = {
       user_id: currentUserID,
@@ -32,13 +33,42 @@ export const MainApp: React.FC = () => {
 
     try {
       const createdPost = await postTweet(newPostData);
-      addTweet(createdPost);
+      //新しく投稿したツイートにはいいねの情報がないので補完
+      const newTweetWithLikeState = {
+        ...createdPost,
+        is_liked: false,
+        likes_count: 0,
+      };
+      addTweet(newTweetWithLikeState);
     } catch (err: any) {
       console.error("Failed to post:", err);
       setPostError(
         "投稿に失敗しました。サーバーの接続状況やCORS設定を確認してください。"
       );
       throw err;
+    }
+  };
+
+  // いいね切り替え処理
+  const handleLikeToggle = async (tweetId: number) => {
+    const tweet = allTweets.find((t) => t.id === tweetId);
+    if (!tweet) return;
+
+    // 1. 楽観的更新
+    toggleLikeState(tweetId);
+
+    // 2. API呼び出し
+    try {
+      if (tweet.is_liked) {
+        await unlikeTweet(currentUserID, tweetId);
+      } else {
+        await likeTweet(currentUserID, tweetId);
+      }
+    } catch (err) {
+      console.error("いいねの更新に失敗:", err);
+      // 3. エラーが発生したらUIを元に戻す
+      toggleLikeState(tweetId);
+      // ここでエラーメッセージをユーザーに表示することも可能
     }
   };
 
@@ -67,6 +97,7 @@ export const MainApp: React.FC = () => {
             postError={postError}
             onTweetClick={navigateToDetail}
             onUserClick={navigateToProfile}
+            onLikeToggle={handleLikeToggle}
           />
         );
 
@@ -92,6 +123,7 @@ export const MainApp: React.FC = () => {
             onPostReply={(content) => handlePost(content, selectedTweet.id)}
             onBack={navigateToTimeline}
             onUserClick={navigateToProfile}
+            onLikeToggle={handleLikeToggle}
           />
         );
 
@@ -103,6 +135,7 @@ export const MainApp: React.FC = () => {
             onBack={navigateToTimeline}
             onTweetClick={navigateToDetail}
             onUserClick={navigateToProfile}
+            onLikeToggle={handleLikeToggle}
           />
         );
 

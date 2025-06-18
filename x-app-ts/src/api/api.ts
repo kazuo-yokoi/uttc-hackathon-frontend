@@ -43,6 +43,8 @@ export interface Tweet {
   user: User;
   reply_to?: Nullable<Tweet>;
   original?: Nullable<Tweet>;
+  likes_count: number;
+  is_liked: boolean;
 }
 
 /**
@@ -75,6 +77,8 @@ const mockTweets: Tweet[] = [
     },
     is_deleted: false,
     updated_at: "",
+    likes_count: 15,
+    is_liked: false,
   },
   {
     id: 998,
@@ -90,15 +94,23 @@ const mockTweets: Tweet[] = [
     },
     is_deleted: false,
     updated_at: "",
+    likes_count: 15,
+    is_liked: false,
   },
 ];
 
 /**
  * すべてのツイートを取得する(配列で返す)
+ * @param currentUserID 現在のユーザーID。いいね状態を判定するために使用
  */
-export const fetchAllTweets = async (): Promise<Tweet[]> => {
+export const fetchAllTweets = async (
+  currentUserID: string
+): Promise<Tweet[]> => {
   try {
-    const response = await fetch(`${API_ENDPOINT}/tweet`);
+    // いいね状態を取得するために current_user_id をクエリパラメータで渡す
+    const response = await fetch(
+      `${API_ENDPOINT}/tweet?current_user_id=${currentUserID}`
+    );
     if (!response.ok) {
       throw new Error(`サーバーエラー (ステータス: ${response.status})`);
     }
@@ -129,4 +141,42 @@ export const postTweet = async (postData: NewPostData): Promise<Tweet> => {
     throw new Error(`投稿に失敗しました (${response.status})`);
   }
   return response.json();
+};
+
+/**
+ * いいねを追加する
+ * @param userId - いいねするユーザーのID
+ * @param tweetId - いいね対象のツイートID
+ */
+export const likeTweet = async (
+  userId: string,
+  tweetId: number
+): Promise<void> => {
+  const response = await fetch(`${API_ENDPOINT}/likes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId, tweet_id: tweetId }),
+  });
+  if (!response.ok) {
+    throw new Error("いいねに失敗しました");
+  }
+};
+
+/**
+ * いいねを取り消す
+ * @param userId - ユーザーID
+ * @param tweetId - ツイートID
+ */
+export const unlikeTweet = async (
+  userId: string,
+  tweetId: number
+): Promise<void> => {
+  const response = await fetch(`${API_ENDPOINT}/likes`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: userId, tweet_id: tweetId }),
+  });
+  if (!response.ok) {
+    throw new Error("いいねの取り消しに失敗しました");
+  }
 };

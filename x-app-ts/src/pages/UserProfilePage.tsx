@@ -8,6 +8,7 @@ interface UserProfilePageProps {
   onBack: () => void;
   onTweetClick: (id: number) => void;
   onUserClick: (userId: string) => void;
+  onLikeToggle: (id: number) => void;
 }
 //ユーザー情報と投稿一覧ページ
 export const UserProfilePage: React.FC<UserProfilePageProps> = ({
@@ -16,6 +17,7 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
   onBack,
   onTweetClick,
   onUserClick,
+  onLikeToggle,
 }) => {
   const user = allTweets.find((t) => t.user_id === userId)?.user;
   const userTweets = allTweets
@@ -71,6 +73,7 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                 tweet={tweet}
                 onCardClick={tweet.type === "tweet" ? onTweetClick : undefined}
                 onUserClick={onUserClick}
+                onLikeToggle={onLikeToggle}
               />
             ))
           ) : (
