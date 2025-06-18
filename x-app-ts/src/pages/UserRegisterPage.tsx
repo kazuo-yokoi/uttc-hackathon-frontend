@@ -1,30 +1,14 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
-import { API_ENDPOINT } from "./api";
-
-export type Nullable<T> = T | null;
-
-export interface User {
-  firebase_uid: string;
-  user_name: string;
-  display_name: string;
-  self_introduction?: Nullable<string>;
-  updateSelfIntro?: Nullable<boolean>;
-  birthdate?: Nullable<string>; // ISO8601形式の文字列で送る（例："2000-01-01T00:00:00Z"）
-  updateBirthdate?: Nullable<boolean>;
-  url?: Nullable<string>;
-  updateURL?: Nullable<boolean>;
-  profile_img?: Nullable<string>;
-  updateProfileImg?: Nullable<boolean>;
-  avatar_img?: Nullable<string>;
-  updateAvatar?: Nullable<boolean>;
-  created_at?: string; // サーバーからのレスポンス用
-  updated_at?: string; // サーバーからのレスポンス用
-}
+import { API_ENDPOINT, User } from "../api/api";
+import { SuccessMessage } from "../components/SuccessMessage";
+import { ErrorMessage } from "../components/ErrorMessage";
 
 // 新規登録フォームコンポーネント
 const RegisterPage: React.FC = () => {
   const { user } = useAuthContext();
+  const navigate = useNavigate();
 
   const firebaseUID = user?.uid ?? "";
 
@@ -60,7 +44,18 @@ const RegisterPage: React.FC = () => {
 
   // フォームが送信されたときのハンドラ
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // フォームのデフォルト送信動作をキャンセル
+    e.preventDefault();
+    // --- バリデーション ---
+    if (!formData.user_name.trim() || !formData.display_name.trim()) {
+      setError(
+        "ユーザー名と表示名は必須入力です。空白のみの登録はできません。"
+      );
+      return; // ここで処理を中断
+    }
+    if (!user) {
+      setError("ログイン情報が見つかりません。");
+      return;
+    }
     setIsLoading(true);
     setError(null);
     setSuccessMessage(null);
@@ -102,24 +97,10 @@ const RegisterPage: React.FC = () => {
       );
       console.log("Created User:", createdUser);
 
-      // フォームをリセット
-      setFormData({
-        firebase_uid: "",
-        user_name: "",
-        display_name: "",
-        self_introduction: null,
-        updateSelfIntro: true,
-        birthdate: null, // ISO8601形式の文字列で送る（例："2000-01-01T00:00:00Z"）
-        updateBirthdate: true,
-        url: null,
-        updateURL: true,
-        profile_img: null,
-        updateProfileImg: true,
-        avatar_img: null,
-        updateAvatar: true,
-        created_at: "", // サーバーからのレスポンス用
-        updated_at: "", // サーバーからのレスポンス用
-      });
+      // 2秒後にホームページへ遷移
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
     } catch (err: any) {
       setError(err.message);
       console.error("Registration failed:", err);
@@ -272,16 +253,8 @@ const RegisterPage: React.FC = () => {
           </div>
 
           {/* Messages */}
-          {error && (
-            <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-center">
-              {error}
-            </div>
-          )}
-          {successMessage && (
-            <div className="bg-green-900/50 border border-green-700 text-green-300 px-4 py-3 rounded-lg text-center">
-              {successMessage}
-            </div>
-          )}
+          {error && <ErrorMessage message={error} />}
+          {successMessage && <SuccessMessage message={successMessage} />}
 
           {/* Submit Button */}
           <div className="pt-4">

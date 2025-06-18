@@ -1,39 +1,22 @@
 import { AuthProvider } from "./context/AuthContext";
 import { Routes, Route } from "react-router-dom";
-import Home from "./routes/Home";
-import Login from "./routes/Login";
-import SignUp from "./routes/Signup";
-import RegisterPage from "./routes/UserRegister";
 import PrivateRoute from "./routes/PrivateRoute";
 import PublicRoute from "./routes/PublicRoute";
-import HomePage from "./routes/HomePage";
+import { MainApp } from "./MainApp";
+import RegisterPage from "./pages/UserRegisterPage";
+import { LoginPage, SignupPage } from "./pages/SignupAndLoginPage";
 
 function App() {
   return (
     <AuthProvider>
+      {/* ログインユーザーのみアクセス可能 */}
       <Routes>
         <Route
           path="/"
           element={
             <PrivateRoute>
-              <Home />
+              <MainApp />
             </PrivateRoute>
-          }
-        />
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            <PublicRoute>
-              <SignUp />
-            </PublicRoute>
           }
         />
         <Route
@@ -44,12 +27,21 @@ function App() {
             </PrivateRoute>
           }
         />
+        {/* 未ログインユーザーのみアクセス可能 */}
         <Route
-          path="/home"
+          path="/login"
           element={
-            <PrivateRoute>
-              <HomePage />
-            </PrivateRoute>
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <SignupPage />
+            </PublicRoute>
           }
         />
       </Routes>
