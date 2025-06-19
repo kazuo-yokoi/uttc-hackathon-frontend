@@ -1,5 +1,6 @@
 import { Tweet } from "../api/api";
 import { ActionButtons } from "./ActionButtons";
+import { SentimentIcon } from "./SentimentIcon";
 
 interface TweetCardProps {
   tweet: Tweet;
@@ -79,7 +80,6 @@ export const TweetCard: React.FC<TweetCardProps> = ({
       </div>
     );
   };
-  console.log(tweet.type);
   return (
     <div
       className={`p-4 border-b border-gray-700/70 ${
@@ -132,6 +132,7 @@ export const TweetCard: React.FC<TweetCardProps> = ({
         />
         <div className="flex-1">
           <div className="flex items-center space-x-2 text-gray-400">
+            <SentimentIcon sentiment={tweet.sentiment} />
             <span
               className="font-bold text-white hover:underline cursor-pointer"
               onClick={(e) => handleUserClick(e, tweet.user_id)}

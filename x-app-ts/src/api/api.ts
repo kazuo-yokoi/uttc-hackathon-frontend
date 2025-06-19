@@ -45,6 +45,8 @@ export interface Tweet {
   original?: Nullable<Tweet>;
   likes_count: number;
   is_liked: boolean;
+  sentiment: "positive" | "negative" | "neutral" | string; // stringは予期せぬ値のため
+  sentiment_score: number;
 }
 
 /**
@@ -80,6 +82,8 @@ const mockTweets: Tweet[] = [
     updated_at: "",
     likes_count: 15,
     is_liked: false,
+    sentiment: "neutral",
+    sentiment_score: 0.5,
   },
   {
     id: 998,
@@ -97,6 +101,8 @@ const mockTweets: Tweet[] = [
     updated_at: "",
     likes_count: 15,
     is_liked: false,
+    sentiment: "neutral",
+    sentiment_score: 0.5,
   },
 ];
 

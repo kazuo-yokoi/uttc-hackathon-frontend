@@ -20,6 +20,8 @@ type ViewState =
   | { mode: "detail"; tweetId: number }
   | { mode: "profile"; userId: string };
 
+export type SentimentFilter = "all" | "positive" | "neutral" | "negative";
+
 export const MainApp: React.FC = () => {
   const [view, setView] = useState<ViewState>({ mode: "timeline" });
   const { user } = useAuthContext();
@@ -31,6 +33,8 @@ export const MainApp: React.FC = () => {
   const [repostModalTarget, setRepostModalTarget] = useState<Tweet | null>(
     null
   );
+  const [sentimentFilter, setSentimentFilter] =
+    useState<SentimentFilter>("all");
 
   const handlePost = async (content: string, replyToId?: number) => {
     setPostError(null);
@@ -103,7 +107,6 @@ export const MainApp: React.FC = () => {
 
     try {
       const createdPost = await postTweet(newPostData);
-      console.log(createdPost);
       addTweet(createdPost);
     } catch (err) {
       console.error("Failed to post:", err);
@@ -143,6 +146,8 @@ export const MainApp: React.FC = () => {
             onUserClick={navigateToProfile}
             onLikeToggle={handleLikeToggle}
             onRepostClick={openRepostModal}
+            sentimentFilter={sentimentFilter}
+            setSentimentFilter={setSentimentFilter}
           />
         );
 
