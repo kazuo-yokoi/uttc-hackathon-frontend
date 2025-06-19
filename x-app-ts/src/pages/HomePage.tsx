@@ -11,6 +11,7 @@ interface HomePageProps {
   onTweetClick: (id: number) => void;
   onUserClick: (userId: string) => void;
   onLikeToggle: (id: number) => void;
+  onRepostClick: (tweet: Tweet) => void;
 }
 //メインのタイムラインページ
 export const HomePage: React.FC<HomePageProps> = ({
@@ -20,6 +21,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onTweetClick,
   onUserClick,
   onLikeToggle,
+  onRepostClick,
 }) => {
   const timelineTweets = allTweets
     .filter((t) => t.type === "tweet")
@@ -42,6 +44,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               onCardClick={onTweetClick}
               onUserClick={onUserClick}
               onLikeToggle={onLikeToggle}
+              onRepostClick={onRepostClick}
             />
           ))
         ) : (

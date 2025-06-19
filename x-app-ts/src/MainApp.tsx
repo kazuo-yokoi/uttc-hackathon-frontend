@@ -1,8 +1,15 @@
 import { useState } from "react";
 import { useTweets } from "./hooks/useTweets";
-import { NewPostData, postTweet, unlikeTweet, likeTweet } from "./api/api";
+import {
+  Tweet,
+  NewPostData,
+  postTweet,
+  unlikeTweet,
+  likeTweet,
+} from "./api/api";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ErrorMessage } from "./components/ErrorMessage";
+import { RepostModal } from "./components/RepostModal";
 import { HomePage } from "./pages/HomePage";
 import { TweetDetailPage } from "./pages/TweetDetailPage";
 import { UserProfilePage } from "./pages/UserProfilePage";
@@ -20,6 +27,10 @@ export const MainApp: React.FC = () => {
   const { allTweets, isLoading, error, addTweet, toggleLikeState } =
     useTweets(currentUserID);
   const [postError, setPostError] = useState<string | null>(null);
+  // リポスト/引用モーダルのためのState
+  const [repostModalTarget, setRepostModalTarget] = useState<Tweet | null>(
+    null
+  );
 
   const handlePost = async (content: string, replyToId?: number) => {
     setPostError(null);
@@ -72,6 +83,39 @@ export const MainApp: React.FC = () => {
     }
   };
 
+  // リポスト・引用投稿のハンドラ
+  const handleRepostOrQuote = async (
+    type: "repost" | "quote",
+    content?: string
+  ) => {
+    if (!repostModalTarget) return;
+    setPostError(null);
+
+    // 元ツイートがリポストや引用だった場合、その更に元をIDとして使う
+    const originalId = repostModalTarget.original_id || repostModalTarget.id;
+
+    const newPostData: NewPostData = {
+      user_id: currentUserID,
+      type: type,
+      text: content,
+      original_id: originalId,
+    };
+
+    try {
+      const createdPost = await postTweet(newPostData);
+      console.log(createdPost);
+      addTweet(createdPost);
+    } catch (err) {
+      console.error("Failed to post:", err);
+      setPostError("投稿に失敗しました。");
+      throw err; // re-throw to be caught by modal
+    }
+  };
+
+  const openRepostModal = (tweet: Tweet) => {
+    setRepostModalTarget(tweet);
+  };
+
   // --- ナビゲーション関数 ---
   const navigateToTimeline = () => setView({ mode: "timeline" });
   const navigateToDetail = (tweetId: number) =>
@@ -98,6 +142,7 @@ export const MainApp: React.FC = () => {
             onTweetClick={navigateToDetail}
             onUserClick={navigateToProfile}
             onLikeToggle={handleLikeToggle}
+            onRepostClick={openRepostModal}
           />
         );
 
@@ -124,6 +169,7 @@ export const MainApp: React.FC = () => {
             onBack={navigateToTimeline}
             onUserClick={navigateToProfile}
             onLikeToggle={handleLikeToggle}
+            onRepostClick={openRepostModal}
           />
         );
 
@@ -136,6 +182,7 @@ export const MainApp: React.FC = () => {
             onTweetClick={navigateToDetail}
             onUserClick={navigateToProfile}
             onLikeToggle={handleLikeToggle}
+            onRepostClick={openRepostModal}
           />
         );
 
@@ -149,6 +196,11 @@ export const MainApp: React.FC = () => {
       <div className="max-w-2xl mx-auto border-x border-gray-700">
         {renderContent()}
       </div>
+      <RepostModal
+        targetTweet={repostModalTarget}
+        onClose={() => setRepostModalTarget(null)}
+        onPost={handleRepostOrQuote}
+      />
     </div>
   );
 };

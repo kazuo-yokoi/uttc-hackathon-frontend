@@ -52,9 +52,10 @@ export interface Tweet {
  */
 export interface NewPostData {
   user_id: string;
-  text: string;
-  type: "tweet" | "reply";
+  text?: string;
+  type: "tweet" | "reply" | "repost" | "quote";
   reply_to_id?: number | null;
+  original_id?: number | null;
 }
 
 //APIエンドポイント

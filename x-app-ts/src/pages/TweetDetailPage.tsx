@@ -10,6 +10,7 @@ interface TweetDetailPageProps {
   onBack: () => void;
   onUserClick: (userId: string) => void;
   onLikeToggle: (id: number) => void;
+  onRepostClick: (tweet: Tweet) => void;
 }
 //ツイート詳細・リプライ表示ページ
 export const TweetDetailPage: React.FC<TweetDetailPageProps> = ({
@@ -19,6 +20,7 @@ export const TweetDetailPage: React.FC<TweetDetailPageProps> = ({
   onBack,
   onUserClick,
   onLikeToggle,
+  onRepostClick,
 }) => {
   return (
     <div>
@@ -28,6 +30,7 @@ export const TweetDetailPage: React.FC<TweetDetailPageProps> = ({
           tweet={tweet}
           onUserClick={onUserClick}
           onLikeToggle={onLikeToggle}
+          onRepostClick={onRepostClick}
         />
         <PostForm
           onPost={onPostReply}
@@ -42,6 +45,7 @@ export const TweetDetailPage: React.FC<TweetDetailPageProps> = ({
                 tweet={reply}
                 onUserClick={onUserClick}
                 onLikeToggle={onLikeToggle}
+                onRepostClick={onRepostClick}
               />
             ))
           ) : (
