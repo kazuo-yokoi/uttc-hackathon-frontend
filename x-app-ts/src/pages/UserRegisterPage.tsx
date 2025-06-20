@@ -24,6 +24,9 @@ const RegisterPage: React.FC = () => {
     avatar_img: null,
     created_at: "", // サーバーからのレスポンス用
     updated_at: "", // サーバーからのレスポンス用
+    followers_count: 0,
+    following_count: 0,
+    is_following: false,
   });
 
   // ローディング状態とエラーメッセージを管理するstate

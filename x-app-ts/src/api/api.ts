@@ -20,6 +20,9 @@ export interface User {
   updateAvatar?: Nullable<boolean>;
   created_at?: string; // サーバーからのレスポンス用
   updated_at?: string; // サーバーからのレスポンス用
+  followers_count: number;
+  following_count: number;
+  is_following: boolean;
 }
 
 /**
@@ -77,6 +80,9 @@ const mockTweets: Tweet[] = [
       user_name: "dev_user",
       display_name: "開発者",
       avatar_img: "https://placehold.co/48x48/71717a/FFFFFF?text=D",
+      followers_count: 0,
+      following_count: 0,
+      is_following: false,
     },
     is_deleted: false,
     updated_at: "",
@@ -96,6 +102,9 @@ const mockTweets: Tweet[] = [
       display_name: "React",
       avatar_img: "https://placehold.co/48x48/1DA1F2/FFFFFF?text=R",
       firebase_uid: "",
+      followers_count: 0,
+      following_count: 0,
+      is_following: false,
     },
     is_deleted: false,
     updated_at: "",
@@ -109,14 +118,16 @@ const mockTweets: Tweet[] = [
 /**
  * すべてのツイートを取得する(配列で返す)
  * @param currentUserID 現在のユーザーID。いいね状態を判定するために使用
+ * @param timelineType 'foryou' | 'following'
  */
 export const fetchAllTweets = async (
-  currentUserID: string
+  currentUserID: string,
+  timelineType: "foryou" | "following"
 ): Promise<Tweet[]> => {
   try {
     // いいね状態を取得するために current_user_id をクエリパラメータで渡す
     const response = await fetch(
-      `${API_ENDPOINT}/tweet?current_user_id=${currentUserID}`
+      `${API_ENDPOINT}/tweet?current_user_id=${currentUserID}&type=${timelineType}`
     );
     if (!response.ok) {
       throw new Error(`サーバーエラー (ステータス: ${response.status})`);
@@ -186,4 +197,59 @@ export const unlikeTweet = async (
   if (!response.ok) {
     throw new Error("いいねの取り消しに失敗しました");
   }
+};
+
+/**
+ * usernameを指定してユーザー情報を取得する
+ * @param username
+ * @param currentUserID
+ * @returns
+ */
+export const fetchUserByUsername = async (
+  username: string,
+  currentUserID: string
+): Promise<User> => {
+  const response = await fetch(
+    `${API_ENDPOINT}/user/${username}?current_user_id=${currentUserID}`
+  );
+  if (!response.ok) throw new Error("User not found");
+  return response.json();
+};
+
+/**
+ * フォローする
+ * @param followerId
+ * @param followingId
+ */
+export const followUser = async (
+  followerId: string,
+  followingId: string
+): Promise<void> => {
+  await fetch(`${API_ENDPOINT}/follows`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      follower_id: followerId,
+      following_id: followingId,
+    }),
+  });
+};
+
+/**
+ * フォローを取り消す
+ * @param followerId
+ * @param followingId
+ */
+export const unfollowUser = async (
+  followerId: string,
+  followingId: string
+): Promise<void> => {
+  await fetch(`${API_ENDPOINT}/follows`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      follower_id: followerId,
+      following_id: followingId,
+    }),
+  });
 };

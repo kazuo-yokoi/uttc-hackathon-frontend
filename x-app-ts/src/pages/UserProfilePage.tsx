@@ -1,71 +1,103 @@
-import { Tweet } from "../api/api";
+import { useState, useEffect } from "react";
+import { Tweet, User, fetchUserByUsername } from "../api/api";
 import { Header } from "../components/Header";
 import { TweetCard } from "../components/TweetCard";
-
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ErrorMessage } from "../components/ErrorMessage";
+import { FollowButton } from "../components/FollowButton";
 interface UserProfilePageProps {
-  userId: string;
+  username: string;
+  currentUserID: string;
   allTweets: Tweet[];
   onBack: () => void;
   onTweetClick: (id: number) => void;
   onUserClick: (userId: string) => void;
   onLikeToggle: (id: number) => void;
   onRepostClick: (tweet: Tweet) => void;
+  onFollowToggle: (targetUser: User) => void;
 }
 //ユーザー情報と投稿一覧ページ
 export const UserProfilePage: React.FC<UserProfilePageProps> = ({
-  userId,
+  username,
+  currentUserID,
   allTweets,
   onBack,
   onTweetClick,
   onUserClick,
   onLikeToggle,
   onRepostClick,
+  onFollowToggle,
 }) => {
-  const user = allTweets.find((t) => t.user_id === userId)?.user;
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isHoveringFollow, setIsHoveringFollow] = useState(false);
+  // Optimistically find user from tweets, then fetch for accuracy
+  const displayUser = user;
   const userTweets = allTweets
-    .filter((t) => t.user_id === userId)
+    .filter((t) => t.user.user_name === username)
     .sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
 
-  if (!user) {
-    return (
-      <div>
-        <Header title="プロフィール" onBack={onBack} />
-        <p className="text-center text-gray-400 p-8">
-          ユーザーが見つかりません。
-        </p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchUserByUsername(username, currentUserID)
+      .then(setUser)
+      .finally(() => setIsLoading(false));
+  }, [username, currentUserID]);
+
+  if (isLoading) return <LoadingSpinner />;
+  if (!displayUser) return <ErrorMessage message="ユーザーが見つかりません" />;
 
   return (
     <div>
-      <Header title={user.display_name} onBack={onBack} />
+      <Header title={displayUser.display_name} onBack={onBack} />
       <main>
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-start space-x-4">
             <img
               src={
-                user.avatar_img ||
-                `https://placehold.co/96x96/1DA1F2/FFFFFF?text=${user.display_name.charAt(
+                displayUser.avatar_img ||
+                `https://placehold.co/96x96/1DA1F2/FFFFFF?text=${displayUser.display_name.charAt(
                   0
                 )}`
               }
-              alt={`${user.display_name}のアバター`}
+              alt={`${displayUser.display_name}のアバター`}
               className="w-24 h-24 rounded-full"
             />
+            {displayUser.firebase_uid !== currentUserID && (
+              <FollowButton
+                isFollowing={displayUser.is_following}
+                onClick={() => onFollowToggle(displayUser)}
+                isHovering={isHoveringFollow}
+                onMouseEnter={() => setIsHoveringFollow(true)}
+                onMouseLeave={() => setIsHoveringFollow(false)}
+              />
+            )}
             <div>
-              <h2 className="text-2xl font-bold">{user.display_name}</h2>
-              <p className="text-gray-400">@{user.user_name}</p>
+              <h2 className="text-2xl font-bold">{displayUser.display_name}</h2>
+              <p className="text-gray-400">@{displayUser.user_name}</p>
             </div>
           </div>
-          {user.self_introduction && (
+          {displayUser.self_introduction && (
             <p className="mt-4 text-white whitespace-pre-wrap">
-              {user.self_introduction}
+              {displayUser.self_introduction}
             </p>
           )}
+          <div className="flex space-x-4 mt-2 text-gray-500">
+            <span>
+              <span className="font-bold text-white">
+                {displayUser.following_count}
+              </span>{" "}
+              フォロー
+            </span>
+            <span>
+              <span className="font-bold text-white">
+                {displayUser.followers_count}
+              </span>{" "}
+              フォロワー
+            </span>
+          </div>
         </div>
         <div>
           {userTweets.length > 0 ? (

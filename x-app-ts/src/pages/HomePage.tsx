@@ -10,11 +10,13 @@ interface HomePageProps {
   handlePost: (content: string) => Promise<void>;
   postError: string | null;
   onTweetClick: (id: number) => void;
-  onUserClick: (userId: string) => void;
+  onUserClick: (username: string) => void;
   onLikeToggle: (id: number) => void;
   onRepostClick: (tweet: Tweet) => void;
   sentimentFilter: SentimentFilter;
   setSentimentFilter: (filter: SentimentFilter) => void;
+  timelineType: "foryou" | "following";
+  setTimelineType: (type: "foryou" | "following") => void;
 }
 
 //メインのタイムラインページ
@@ -28,6 +30,8 @@ export const HomePage: React.FC<HomePageProps> = ({
   onRepostClick,
   sentimentFilter,
   setSentimentFilter,
+  timelineType,
+  setTimelineType,
 }) => {
   const timelineTweets = allTweets
     .filter((t) => t.type === "tweet")
@@ -42,9 +46,45 @@ export const HomePage: React.FC<HomePageProps> = ({
     return tweet.sentiment === sentimentFilter;
   });
 
+  const TabButton: React.FC<{
+    title: string;
+    active: boolean;
+    onClick: () => void;
+  }> = ({ title, active, onClick }) => (
+    <button
+      onClick={onClick}
+      className="w-full h-full flex justify-center items-center hover:bg-gray-800/80 transition-colors"
+    >
+      <div
+        className={`h-full flex items-center border-b-4 ${
+          active ? "border-blue-500" : "border-transparent"
+        }`}
+      >
+        <span
+          className={`font-bold ${active ? "text-white" : "text-gray-500"}`}
+        >
+          {title}
+        </span>
+      </div>
+    </button>
+  );
+
   return (
     <div>
       <Header title="ホーム" />
+      {/* ★タイムライン切り替えタブ */}
+      <div className="h-14 border-b border-gray-700 flex">
+        <TabButton
+          title="すべて"
+          active={timelineType === "foryou"}
+          onClick={() => setTimelineType("foryou")}
+        />
+        <TabButton
+          title="フォロー中"
+          active={timelineType === "following"}
+          onClick={() => setTimelineType("following")}
+        />
+      </div>
       <PostForm onPost={handlePost} />
       {postError && <ErrorMessage message={postError} />}
       {/* 感情フィルター */}

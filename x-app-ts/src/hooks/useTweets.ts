@@ -10,7 +10,10 @@ import { Tweet, fetchAllTweets } from "../api/api";
  * @reloadtweet - 全ての投稿を取得する関数
  * @toggleLikeState - いいね状態を楽観的に更新する関数
  */
-export const useTweets = (currentUserID: string) => {
+export const useTweets = (
+  currentUserID: string,
+  timelineType: "foryou" | "following"
+) => {
   const [allTweets, setAllTweets] = useState<Tweet[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,14 +22,14 @@ export const useTweets = (currentUserID: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchAllTweets(currentUserID);
+      const data = await fetchAllTweets(currentUserID, timelineType);
       setAllTweets(data);
     } catch (err) {
       setError("ツイートの読み込みに失敗しました。");
     } finally {
       setIsLoading(false);
     }
-  }, [currentUserID]);
+  }, [currentUserID, timelineType]);
 
   useEffect(() => {
     if (currentUserID) {
@@ -59,6 +62,7 @@ export const useTweets = (currentUserID: string) => {
 
   return {
     allTweets,
+    setAllTweets,
     isLoading,
     error,
     addTweet,

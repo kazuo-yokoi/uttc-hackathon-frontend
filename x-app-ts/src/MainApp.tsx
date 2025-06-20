@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useTweets } from "./hooks/useTweets";
 import {
   Tweet,
+  User,
   NewPostData,
   postTweet,
   unlikeTweet,
   likeTweet,
+  followUser,
+  unfollowUser,
 } from "./api/api";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ErrorMessage } from "./components/ErrorMessage";
@@ -18,16 +21,24 @@ import { useAuthContext } from "./context/AuthContext";
 type ViewState =
   | { mode: "timeline" }
   | { mode: "detail"; tweetId: number }
-  | { mode: "profile"; userId: string };
+  | { mode: "profile"; username: string };
 
+type TimelineType = "foryou" | "following";
 export type SentimentFilter = "all" | "positive" | "neutral" | "negative";
 
 export const MainApp: React.FC = () => {
   const [view, setView] = useState<ViewState>({ mode: "timeline" });
+  const [timelineType, setTimelineType] = useState<TimelineType>("foryou");
   const { user } = useAuthContext();
   const currentUserID = user?.uid ?? "";
-  const { allTweets, isLoading, error, addTweet, toggleLikeState } =
-    useTweets(currentUserID);
+  const {
+    allTweets,
+    setAllTweets,
+    isLoading,
+    error,
+    addTweet,
+    toggleLikeState,
+  } = useTweets(currentUserID, timelineType);
   const [postError, setPostError] = useState<string | null>(null);
   // リポスト/引用モーダルのためのState
   const [repostModalTarget, setRepostModalTarget] = useState<Tweet | null>(
@@ -83,7 +94,60 @@ export const MainApp: React.FC = () => {
       console.error("いいねの更新に失敗:", err);
       // 3. エラーが発生したらUIを元に戻す
       toggleLikeState(tweetId);
-      // ここでエラーメッセージをユーザーに表示することも可能
+    }
+  };
+
+  //フォローの切り替え
+  const handleFollowToggle = async (targetUser: User) => {
+    const originalFollowingState = targetUser.is_following;
+    const originalFollowersCount = targetUser.followers_count;
+
+    // 1. 楽観的更新
+    const updatedUser = {
+      ...targetUser,
+      is_following: !originalFollowingState,
+      followers_count: originalFollowingState
+        ? originalFollowersCount - 1
+        : originalFollowersCount + 1,
+    };
+
+    setAllTweets((prev) =>
+      prev.map((tweet) => {
+        let userUpdated = false;
+        if (tweet.user.firebase_uid === targetUser.firebase_uid) {
+          tweet.user = { ...tweet.user, ...updatedUser };
+          userUpdated = true;
+        }
+        if (tweet.original?.user.firebase_uid === targetUser.firebase_uid) {
+          tweet.original.user = { ...tweet.original.user, ...updatedUser };
+          userUpdated = true;
+        }
+        return tweet;
+      })
+    );
+
+    // 2. API呼び出し
+    try {
+      if (originalFollowingState) {
+        await unfollowUser(currentUserID, targetUser.firebase_uid);
+      } else {
+        await followUser(currentUserID, targetUser.firebase_uid);
+      }
+    } catch (err) {
+      // 3. エラーが発生したらUIを元に戻す
+      console.error("Follow toggle failed", err);
+      setAllTweets((prev) =>
+        prev.map((tweet) => {
+          if (tweet.user.firebase_uid === targetUser.firebase_uid) {
+            tweet.user.is_following = originalFollowingState;
+            tweet.user.followers_count = originalFollowersCount;
+          }
+          if (tweet.original?.user.firebase_uid === targetUser.firebase_uid) {
+            tweet.original.user.is_following = originalFollowingState;
+          }
+          return tweet;
+        })
+      );
     }
   };
 
@@ -123,8 +187,8 @@ export const MainApp: React.FC = () => {
   const navigateToTimeline = () => setView({ mode: "timeline" });
   const navigateToDetail = (tweetId: number) =>
     setView({ mode: "detail", tweetId });
-  const navigateToProfile = (userId: string) =>
-    setView({ mode: "profile", userId });
+  const navigateToProfile = (username: string) =>
+    setView({ mode: "profile", username });
 
   // --- 表示するコンポーネントを決定 ---
   const renderContent = () => {
@@ -148,6 +212,8 @@ export const MainApp: React.FC = () => {
             onRepostClick={openRepostModal}
             sentimentFilter={sentimentFilter}
             setSentimentFilter={setSentimentFilter}
+            timelineType={timelineType}
+            setTimelineType={setTimelineType}
           />
         );
 
@@ -181,13 +247,15 @@ export const MainApp: React.FC = () => {
       case "profile":
         return (
           <UserProfilePage
-            userId={view.userId}
+            username={view.username}
+            currentUserID={currentUserID}
             allTweets={allTweets}
             onBack={navigateToTimeline}
             onTweetClick={navigateToDetail}
             onUserClick={navigateToProfile}
             onLikeToggle={handleLikeToggle}
             onRepostClick={openRepostModal}
+            onFollowToggle={handleFollowToggle}
           />
         );
 

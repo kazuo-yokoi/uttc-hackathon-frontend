@@ -5,7 +5,7 @@ import { SentimentIcon } from "./SentimentIcon";
 interface TweetCardProps {
   tweet: Tweet;
   onCardClick?: (id: number) => void;
-  onUserClick: (userId: string) => void;
+  onUserClick: (username: string) => void;
   onLikeToggle: (id: number) => void;
   onRepostClick: (tweet: Tweet) => void;
 }
@@ -26,9 +26,9 @@ export const TweetCard: React.FC<TweetCardProps> = ({
   });
 
   // ユーザー部分クリックのハンドラ
-  const handleUserClick = (e: React.MouseEvent, userId: string) => {
+  const handleUserClick = (e: React.MouseEvent, username: string) => {
     e.stopPropagation(); // カード全体のクリックイベントの発火を防ぐ
-    onUserClick(userId);
+    onUserClick(username);
   };
 
   // カード本体クリックのハンドラ
@@ -63,7 +63,7 @@ export const TweetCard: React.FC<TweetCardProps> = ({
             />
             <span
               className="font-bold text-white hover:underline"
-              onClick={(e) => handleUserClick(e, original.user_id)}
+              onClick={(e) => handleUserClick(e, original.user.user_name)}
             >
               {original.user.display_name}
             </span>
@@ -80,6 +80,7 @@ export const TweetCard: React.FC<TweetCardProps> = ({
       </div>
     );
   };
+
   return (
     <div
       className={`p-4 border-b border-gray-700/70 ${
@@ -106,7 +107,7 @@ export const TweetCard: React.FC<TweetCardProps> = ({
             />
           </svg>
           <span
-            onClick={(e) => handleUserClick(e, tweet.user_id)}
+            onClick={(e) => handleUserClick(e, tweet.user.user_name)}
             className="font-bold hover:underline cursor-pointer"
           >
             {tweet.user.display_name}さんがリポストしました
@@ -128,14 +129,14 @@ export const TweetCard: React.FC<TweetCardProps> = ({
           }
           alt=""
           className="w-12 h-12 rounded-full cursor-pointer"
-          onClick={(e) => handleUserClick(e, tweet.user_id)}
+          onClick={(e) => handleUserClick(e, tweet.user.user_name)}
         />
         <div className="flex-1">
           <div className="flex items-center space-x-2 text-gray-400">
             <SentimentIcon sentiment={tweet.sentiment} />
             <span
               className="font-bold text-white hover:underline cursor-pointer"
-              onClick={(e) => handleUserClick(e, tweet.user_id)}
+              onClick={(e) => handleUserClick(e, tweet.user.user_name)}
             >
               {tweet.user.display_name}
             </span>
