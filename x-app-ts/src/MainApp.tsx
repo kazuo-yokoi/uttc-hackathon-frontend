@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTweets } from "./hooks/useTweets";
 import {
   Tweet,
@@ -9,6 +9,7 @@ import {
   likeTweet,
   followUser,
   unfollowUser,
+  getMyProfile,
 } from "./api/api";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ErrorMessage } from "./components/ErrorMessage";
@@ -17,11 +18,15 @@ import { HomePage } from "./pages/HomePage";
 import { TweetDetailPage } from "./pages/TweetDetailPage";
 import { UserProfilePage } from "./pages/UserProfilePage";
 import { useAuthContext } from "./context/AuthContext";
+import { ProfileContext } from "./context/ProfileContext";
+import { Sidebar } from "./components/Sidebar";
+import { EditProfileModal } from "./components/EditProfileModal";
 
 type ViewState =
   | { mode: "timeline" }
   | { mode: "detail"; tweetId: number }
-  | { mode: "profile"; username: string };
+  | { mode: "profile"; username: string }
+  | { mode: "my-profile" };
 
 type TimelineType = "foryou" | "following";
 export type SentimentFilter = "all" | "positive" | "neutral" | "negative";
@@ -30,7 +35,8 @@ export const MainApp: React.FC = () => {
   const [view, setView] = useState<ViewState>({ mode: "timeline" });
   const [timelineType, setTimelineType] = useState<TimelineType>("foryou");
   const { user } = useAuthContext();
-  const currentUserID = user?.uid ?? "";
+  const currentUserID = user!.uid;
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const {
     allTweets,
     setAllTweets,
@@ -46,7 +52,23 @@ export const MainApp: React.FC = () => {
   );
   const [sentimentFilter, setSentimentFilter] =
     useState<SentimentFilter>("all");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const myProfile = await getMyProfile(currentUserID);
+        setCurrentUser(myProfile);
+      } catch (err) {
+        console.error("プロフィールの取得に失敗しました", err);
+      }
+    };
+
+    fetchProfile();
+  }, [currentUserID]);
+
+  //新規投稿処理
   const handlePost = async (content: string, replyToId?: number) => {
     setPostError(null);
 
@@ -113,14 +135,11 @@ export const MainApp: React.FC = () => {
 
     setAllTweets((prev) =>
       prev.map((tweet) => {
-        let userUpdated = false;
         if (tweet.user.firebase_uid === targetUser.firebase_uid) {
           tweet.user = { ...tweet.user, ...updatedUser };
-          userUpdated = true;
         }
         if (tweet.original?.user.firebase_uid === targetUser.firebase_uid) {
           tweet.original.user = { ...tweet.original.user, ...updatedUser };
-          userUpdated = true;
         }
         return tweet;
       })
@@ -181,6 +200,9 @@ export const MainApp: React.FC = () => {
 
   const openRepostModal = (tweet: Tweet) => {
     setRepostModalTarget(tweet);
+  };
+  const handleProfileUpdate = (updatedUser: User) => {
+    setCurrentUser(updatedUser);
   };
 
   // --- ナビゲーション関数 ---
@@ -259,22 +281,84 @@ export const MainApp: React.FC = () => {
           />
         );
 
+      case "my-profile":
+        return (
+          <div>
+            <h2 className="text-2xl font-bold p-4">マイプロフィール</h2>
+            <div className="p-4">
+              <p>名前: {currentUser?.display_name}</p>
+              <p>自己紹介: {currentUser?.self_introduction}</p>
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="mt-4 bg-blue-500 px-4 py-2 rounded-full"
+              >
+                プロフィールを編集
+              </button>
+            </div>
+          </div>
+        );
+
       default:
         return <ErrorMessage message="不明なページです。" />;
     }
   };
 
   return (
-    <div className="bg-gray-900 min-h-screen font-sans text-white">
-      <div className="max-w-2xl mx-auto border-x border-gray-700">
-        {renderContent()}
+    <ProfileContext.Provider value={{ currentUser, setCurrentUser }}>
+      <div className="bg-gray-900 min-h-screen font-sans text-white flex">
+        {/* --- サイドバー --- */}
+        {currentUser && (
+          <Sidebar
+            isOpen={isSidebarOpen}
+            setIsOpen={setIsSidebarOpen}
+            onHomeClick={() => setView({ mode: "timeline" })}
+            onProfileClick={() => setView({ mode: "my-profile" })}
+          />
+        )}
+
+        {/* --- メインコンテンツ --- */}
+        <div className="flex-1 min-w-0">
+          {/* モバイル用のメニューボタン */}
+          <div className="sticky top-0 bg-gray-900/80 backdrop-blur-md p-2 lg:hidden">
+            <button onClick={() => setIsSidebarOpen(true)}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <div className="max-w-2xl mx-auto border-x border-gray-700 min-h-screen">
+            {renderContent()}
+          </div>
+        </div>
+        {/* --- 各種モーダル --- */}
+        {isEditModalOpen && currentUser && (
+          <EditProfileModal
+            user={currentUser}
+            onClose={() => setIsEditModalOpen(false)}
+            onSave={handleProfileUpdate}
+          />
+        )}
+        {repostModalTarget && (
+          <RepostModal
+            targetTweet={repostModalTarget}
+            onClose={() => setRepostModalTarget(null)}
+            onPost={handleRepostOrQuote}
+          />
+        )}
       </div>
-      <RepostModal
-        targetTweet={repostModalTarget}
-        onClose={() => setRepostModalTarget(null)}
-        onPost={handleRepostOrQuote}
-      />
-    </div>
+    </ProfileContext.Provider>
   );
 };
 

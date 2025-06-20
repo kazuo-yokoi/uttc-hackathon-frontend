@@ -253,3 +253,26 @@ export const unfollowUser = async (
     }),
   });
 };
+
+/**
+ * ログインしている自分のユーザー情報を取得
+ * @param currentUserID
+ * @returns
+ */
+export const getMyProfile = async (currentUserID: string): Promise<User> => {
+  const response = await fetch(
+    `${API_ENDPOINT}/user/?current_user_id=${currentUserID}`
+  );
+  if (!response.ok) throw new Error("Failed to fetch profile");
+  return response.json();
+};
+
+export const updateMyProfile = async (user: User): Promise<User> => {
+  const response = await fetch("/user", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(user),
+  });
+  if (!response.ok) throw new Error("Failed to update profile");
+  return response.json();
+};
