@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tweet, User, fetchUserByUsername } from "../api/api";
 import { Header } from "../components/Header";
 import { TweetCard } from "../components/TweetCard";
@@ -31,15 +31,27 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isHoveringFollow, setIsHoveringFollow] = useState(false);
-  // Optimistically find user from tweets, then fetch for accuracy
-  const displayUser =
-    allTweets.find((t) => t.user.user_name === username)?.user || user;
-  const userTweets = allTweets
-    .filter((t) => t.user.user_name === username)
-    .sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+
+  const displayUser = useMemo(() => {
+    // 1. APIから取得したベースのユーザー情報を定義
+    const baseUser = user;
+
+    // 2. allTweetsから、楽観的更新が反映されている可能性のあるユーザー情報を探す
+    const optimisticUser = allTweets.find(
+      (t) => t.user.user_name === username
+    )?.user;
+
+    if (!baseUser) {
+      // APIからの読み込みがまだなら、ひとまずallTweetsの情報を表示（ちらつき防止）
+      return optimisticUser || null;
+    }
+
+    // 3. 両方の情報源をマージする
+    return {
+      ...baseUser,
+      ...optimisticUser,
+    };
+  }, [user, allTweets, username]); // user, allTweets, username のいずれかが変更された時だけ再計算
 
   useEffect(() => {
     fetchUserByUsername(username, currentUserID)
@@ -49,6 +61,13 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
 
   if (isLoading) return <LoadingSpinner />;
   if (!displayUser) return <ErrorMessage message="ユーザーが見つかりません" />;
+
+  const userTweets = allTweets
+    .filter((t) => t.user.user_name === username)
+    .sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
 
   return (
     <div>
