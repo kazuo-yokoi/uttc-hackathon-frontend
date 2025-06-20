@@ -30,11 +30,13 @@ type ViewState =
 
 type TimelineType = "foryou" | "following";
 export type SentimentFilter = "all" | "positive" | "neutral" | "negative";
+interface AppContentProps {
+  user: NonNullable<ReturnType<typeof useAuthContext>["user"]>; // userがnullでないことを型レベルで保証
+}
 
-export const MainApp: React.FC = () => {
+export const MainApp: React.FC<AppContentProps> = ({ user }) => {
   const [view, setView] = useState<ViewState>({ mode: "timeline" });
   const [timelineType, setTimelineType] = useState<TimelineType>("foryou");
-  const { user } = useAuthContext();
   const currentUserID = user!.uid;
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const {

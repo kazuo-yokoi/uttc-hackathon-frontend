@@ -52,7 +52,7 @@ export const EditProfileModal: React.FC<{
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-lg text-white">
+      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-lg text-white max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-bold mb-4">プロフィールを編集</h2>
         <div className="space-y-4">
           <div>
@@ -94,20 +94,6 @@ export const EditProfileModal: React.FC<{
                 setUpdateUser((prev) => ({
                   ...prev,
                   birthdate: e.target.value,
-                }))
-              }
-              className="w-full bg-gray-900 p-2 rounded"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400">表示名</label>
-            <input
-              type="text"
-              value={updateUser.display_name}
-              onChange={(e) =>
-                setUpdateUser((prev) => ({
-                  ...prev,
-                  display_name: e.target.value,
                 }))
               }
               className="w-full bg-gray-900 p-2 rounded"

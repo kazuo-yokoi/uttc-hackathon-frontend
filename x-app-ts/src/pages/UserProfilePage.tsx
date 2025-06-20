@@ -32,7 +32,8 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isHoveringFollow, setIsHoveringFollow] = useState(false);
   // Optimistically find user from tweets, then fetch for accuracy
-  const displayUser = user;
+  const displayUser =
+    allTweets.find((t) => t.user.user_name === username)?.user || user;
   const userTweets = allTweets
     .filter((t) => t.user.user_name === username)
     .sort(

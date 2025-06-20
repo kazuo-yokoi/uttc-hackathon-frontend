@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../context/AuthContext";
 import { API_ENDPOINT, User } from "../api/api";
@@ -7,14 +7,12 @@ import { ErrorMessage } from "../components/ErrorMessage";
 
 // 新規登録フォームコンポーネント
 const RegisterPage: React.FC = () => {
-  const { user } = useAuthContext();
+  const { user, loading } = useAuthContext(); // loading状態も受け取る
   const navigate = useNavigate();
-
-  const firebaseUID = user?.uid ?? "";
 
   // フォームの入力値を管理するstate
   const [formData, setFormData] = useState<User>({
-    firebase_uid: firebaseUID,
+    firebase_uid: "",
     user_name: "",
     display_name: "",
     self_introduction: null,
@@ -29,10 +27,28 @@ const RegisterPage: React.FC = () => {
     is_following: false,
   });
 
+  // userオブジェクトが読み込まれた後に、formDataのfirebase_uidを更新する
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({ ...prev, firebase_uid: user.uid }));
+    }
+  }, [user]);
+
   // ローディング状態とエラーメッセージを管理するstate
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // 認証情報の読み込み中はローディング表示
+  if (loading) {
+    return <p>ユーザー情報を確認中...</p>;
+  }
+
+  // 読み込み完了後、userがいなければログインページへ（安全対策）
+  if (!user) {
+    navigate("/login");
+    return null; // リダイレクト中は何も描画しない
+  }
 
   // 入力値が変更されたときにstateを更新するハンドラ
   const handleChange = (
@@ -77,7 +93,7 @@ const RegisterPage: React.FC = () => {
     };
 
     try {
-      const response = await fetch(`${API_ENDPOINT}/user`, {
+      const response = await fetch(`${API_ENDPOINT}/user/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -100,10 +116,7 @@ const RegisterPage: React.FC = () => {
       );
       console.log("Created User:", createdUser);
 
-      // 2秒後にホームページへ遷移
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
       console.error("Registration failed:", err);

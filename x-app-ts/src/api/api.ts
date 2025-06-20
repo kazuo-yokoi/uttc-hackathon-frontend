@@ -225,7 +225,7 @@ export const followUser = async (
   followerId: string,
   followingId: string
 ): Promise<void> => {
-  await fetch(`${API_ENDPOINT}/follows`, {
+  await fetch(`${API_ENDPOINT}/follow`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -244,7 +244,7 @@ export const unfollowUser = async (
   followerId: string,
   followingId: string
 ): Promise<void> => {
-  await fetch(`${API_ENDPOINT}/follows`, {
+  await fetch(`${API_ENDPOINT}/follow`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -268,7 +268,7 @@ export const getMyProfile = async (currentUserID: string): Promise<User> => {
 };
 
 export const updateMyProfile = async (user: User): Promise<User> => {
-  const response = await fetch("/user", {
+  const response = await fetch(`${API_ENDPOINT}/user/`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(user),
