@@ -85,6 +85,10 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
               alt={`${displayUser.display_name}のアバター`}
               className="w-24 h-24 rounded-full"
             />
+            <div>
+              <h2 className="text-2xl font-bold">{displayUser.display_name}</h2>
+              <p className="text-gray-400">@{displayUser.user_name}</p>
+            </div>
             {displayUser.firebase_uid !== currentUserID && (
               <FollowButton
                 isFollowing={displayUser.is_following}
@@ -94,10 +98,6 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                 onMouseLeave={() => setIsHoveringFollow(false)}
               />
             )}
-            <div>
-              <h2 className="text-2xl font-bold">{displayUser.display_name}</h2>
-              <p className="text-gray-400">@{displayUser.user_name}</p>
-            </div>
           </div>
           {displayUser.self_introduction && (
             <p className="mt-4 text-white whitespace-pre-wrap">

@@ -214,6 +214,19 @@ export const MainApp: React.FC<AppContentProps> = ({ user }) => {
   const navigateToProfile = (username: string) =>
     setView({ mode: "profile", username });
 
+  // 日付をフォーマットするヘルパー関数
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("ja-JP", {
+      year: "numeric",
+      month: "long",
+    }).format(date);
+  };
+
+  // created_atの日付をフォーマット
+  const registrationDate = formatDate(currentUser?.created_at);
+
   // --- 表示するコンポーネントを決定 ---
   const renderContent = () => {
     if (isLoading) {
@@ -285,17 +298,117 @@ export const MainApp: React.FC<AppContentProps> = ({ user }) => {
 
       case "my-profile":
         return (
-          <div>
-            <h2 className="text-2xl font-bold p-4">マイプロフィール</h2>
-            <div className="p-4">
-              <p>名前: {currentUser?.display_name}</p>
-              <p>自己紹介: {currentUser?.self_introduction}</p>
-              <button
-                onClick={() => setIsEditModalOpen(true)}
-                className="mt-4 bg-blue-500 px-4 py-2 rounded-full"
-              >
-                プロフィールを編集
-              </button>
+          <div className="bg-slate-900 text-white rounded-lg overflow-hidden">
+            <div className="relative">
+              <div
+                className="h-48 md:h-56 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url(${
+                    currentUser?.profile_img ||
+                    "https://placehold.co/1500x500/334155/E2E8F0?text=Header+Image"
+                  })`,
+                }}
+                aria-hidden="true"
+              />
+              <div className="p-4">
+                <div className="flex justify-between items-start">
+                  <img
+                    src={
+                      currentUser?.avatar_img ||
+                      `https://placehold.co/96x96/1DA1F2/FFFFFF?text=${currentUser?.display_name.charAt(
+                        0
+                      )}`
+                    }
+                    alt={`${currentUser?.display_name}のアバター`}
+                    className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-slate-900 -mt-16 md:-mt-20"
+                  />
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="mt-4 bg-blue-500 px-4 py-2 rounded-full"
+                  >
+                    プロフィールを編集
+                  </button>
+                </div>
+                <div>
+                  <h2>名前: {currentUser?.display_name}</h2>
+                </div>
+                {currentUser?.self_introduction && (
+                  <p className="mt-4 text-white whitespace-pre-wrap">
+                    {currentUser.self_introduction}
+                  </p>
+                )}
+                <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-gray-400 text-sm">
+                  {/* URL */}
+                  {currentUser?.url && (
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                        />
+                      </svg>
+                      <a
+                        href={currentUser.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline"
+                      >
+                        {currentUser.url.replace(/^(https?:\/\/)?(www\.)?/, "")}
+                      </a>
+                    </div>
+                  )}
+
+                  {/* 誕生日 */}
+                  {currentUser?.birthdate && (
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M21 15.25a8.954 8.954 0 01-4.186 7.25M12 21a9 9 0 115.814-16.319M12 21V9m0 12a9 9 0 005.814-16.319M12 9c-2.21 0-4-1.343-4-3s1.79-3 4-3 4 1.343 4 3-1.79 3-4 3z"
+                        />
+                      </svg>
+                      <span>誕生日: {currentUser.birthdate}</span>
+                    </div>
+                  )}
+
+                  {/* 登録日 */}
+                  {registrationDate && (
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span>{registrationDate}から利用しています</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         );
